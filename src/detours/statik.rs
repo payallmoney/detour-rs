@@ -102,6 +102,7 @@ impl<T: Function> StaticDetour<T> {
   /// # }
   /// ```
   pub unsafe fn initialize(&self, target: T, closure: T) -> Result<&Self> {
+    println!("initialize ");
     let mut detour = Box::new(GenericDetour::new(target, self.ffi)?);
     if !self
       .detour
