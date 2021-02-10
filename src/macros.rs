@@ -1,6 +1,7 @@
 /// A macro for defining static, type-safe detours.
 ///
-/// This macro defines one or more [StaticDetour](./struct.StaticDetour.html)s.  
+/// This macro defines one or more [StaticDetour](./struct.StaticDetour.html)s.
+///
 ///
 /// # Syntax
 ///
@@ -111,7 +112,7 @@ macro_rules! static_detour {
     static_detour!(@argument_names (create_detour)(
       ($($attribute)*) ($($visibility)*) ($name)
       ($($modifier)*) ($($argument_type)*) ($return_type)
-      ($($modifier)* fn ($($argument_type),*) -> $return_type)
+      ($($visibility:tt)* $($modifier)* fn ($($argument_type),*) -> $return_type)
     )($($argument_type)*));
   };
 

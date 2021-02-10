@@ -37,7 +37,12 @@ unsafe fn main() -> Result<(), Box<dyn Error>> {
 }
 
 /// Called whenever `MessageBoxW` is invoked in the process.
-fn messageboxw_detour(hwnd: HWND, text: LPCWSTR, _caption: LPCWSTR, u_type: UINT) -> c_int {
+unsafe extern "system" fn messageboxw_detour(
+  hwnd: HWND,
+  text: LPCWSTR,
+  _caption: LPCWSTR,
+  u_type: UINT,
+) -> c_int {
   // Call the original `MessageBoxW`, but replace the caption
   let replaced_caption = "Detoured!\0".encode_utf16().collect::<Vec<u16>>();
   unsafe { MessageBoxWHook.call(hwnd, text, replaced_caption.as_ptr() as _, u_type) }
