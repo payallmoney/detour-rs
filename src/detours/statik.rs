@@ -108,11 +108,14 @@ impl<T: Function> StaticDetour<T> {
       .compare_and_swap(ptr::null_mut(), &mut *detour, Ordering::SeqCst)
       .is_null()
     {
-      Err(Error::AlreadyInitialized)?;
+      println!(" err !");
+      Err(Error::AlreadyInitialized)?
     }
-
+    println!(" before set_detour !");
     self.set_detour(closure);
+    println!(" set_detour !");
     mem::forget(detour);
+    println!(" forget !");
     Ok(self)
   }
 
