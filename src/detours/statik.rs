@@ -62,7 +62,7 @@ use std::{mem, ptr};
 /// }
 /// ```
 pub struct StaticDetour<T: Function> {
-  closure: AtomicPtr<Box<dyn Fn<T::Arguments, Output = T::Output>>>,
+  closure: AtomicPtr<Box<T>>,
   detour: AtomicPtr<GenericDetour<T>>,
   ffi: T,
 }
@@ -101,28 +101,7 @@ impl<T: Function> StaticDetour<T> {
   /// # Ok(())
   /// # }
   /// ```
-  pub unsafe fn initialize<D>(&self, target: T, closure: D) -> Result<&Self>
-  where
-    D: Fn<T::Arguments, Output = T::Output> + Send + 'static,
-  {
-    let mut detour = Box::new(GenericDetour::new(target, self.ffi)?);
-    if !self
-      .detour
-      .compare_and_swap(ptr::null_mut(), &mut *detour, Ordering::SeqCst)
-      .is_null()
-    {
-      Err(Error::AlreadyInitialized)?;
-    }
-
-    self.set_detour(closure);
-    mem::forget(detour);
-    Ok(self)
-  }
-
-  pub unsafe fn initialize_fn<D>(&self, target: T, closure: D) -> Result<&Self>
-  where
-    D: Fn<T::Arguments, Output = T::Output> + Send + 'static,
-  {
+  pub unsafe fn initialize(&self, target: T, closure: T) -> Result<&Self> {
     let mut detour = Box::new(GenericDetour::new(target, self.ffi)?);
     if !self
       .detour
@@ -165,10 +144,7 @@ impl<T: Function> StaticDetour<T> {
   }
 
   /// Changes the detour, regardless of whether the hook is enabled or not.
-  pub fn set_detour<C>(&self, closure: C)
-  where
-    C: Fn<T::Arguments, Output = T::Output> + Send + 'static,
-  {
+  pub fn set_detour(&self, closure: T) {
     let previous = self
       .closure
       .swap(Box::into_raw(Box::new(Box::new(closure))), Ordering::SeqCst);
@@ -188,7 +164,7 @@ impl<T: Function> StaticDetour<T> {
 
   /// Returns a transient reference to the active detour.
   #[doc(hidden)]
-  pub fn __detour(&self) -> &dyn Fn<T::Arguments, Output = T::Output> {
+  pub fn __detour(&self) -> &Box<T> {
     // TODO: This is not 100% thread-safe in case the thread is stopped
     unsafe { self.closure.load(Ordering::SeqCst).as_ref() }
       .ok_or(Error::NotInitialized)
